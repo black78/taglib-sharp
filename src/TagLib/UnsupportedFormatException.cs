@@ -92,7 +92,7 @@ namespace TagLib {
 	/// 	Console.WriteLine ("That file format is not supported: {0}", e.ToString ());
 	///    </code>
 	/// </example>
-	[Serializable]
+	// [Serializable]
 	public class UnsupportedFormatException : Exception
 	{
 		/// <summary>
@@ -155,10 +155,10 @@ namespace TagLib {
 		///    cref="UnsupportedFormatException" /> implements the <see
 		///    cref="ISerializable" /> interface.
 		/// </remarks>
-		protected UnsupportedFormatException (SerializationInfo info,
-		                                      StreamingContext context)
-			: base(info, context)
-		{
-		}
+		//protected UnsupportedFormatException (SerializationInfo info,
+		//									  StreamingContext context)
+		//	: base(info, context)
+		//{
+		//}
 	}
 }

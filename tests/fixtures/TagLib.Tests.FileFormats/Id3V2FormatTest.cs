@@ -16,7 +16,7 @@ namespace TagLib.Tests.FileFormats
         [TestFixtureSetUp]
         public void Init()
         {
-            file = File.Create(sample_file);
+            file = TagLib.IO.File.Create(sample_file);
         }
     
         [Test]
@@ -53,7 +53,7 @@ namespace TagLib.Tests.FileFormats
             }
             
             System.IO.File.Copy (corrupt_file, tmp_file);
-            File tmp = File.Create (tmp_file);
+            File tmp = TagLib.IO.File.Create (tmp_file);
             
             Assert.AreEqual ("T", tmp.Tag.Title);
         }
@@ -67,7 +67,7 @@ namespace TagLib.Tests.FileFormats
         public void TestExtendedHeaderSize()
         {
             // bgo#604488
-            var file = File.Create (ext_header_file);
+            var file = TagLib.IO.File.Create (ext_header_file);
             Assert.AreEqual ("Title v2", file.Tag.Title);
         }
     }

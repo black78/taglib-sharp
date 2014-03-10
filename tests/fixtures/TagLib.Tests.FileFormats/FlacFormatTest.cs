@@ -14,7 +14,7 @@ namespace TagLib.Tests.FileFormats
         [TestFixtureSetUp]
         public void Init()
         {
-            file = File.Create(sample_file);
+            file = TagLib.IO.File.Create(sample_file);
         }
     
         [Test]
@@ -64,7 +64,7 @@ namespace TagLib.Tests.FileFormats
             string inFile = "samples/sample_replaygain.flac";
             string tempFile = "samples/tmpwrite_sample_replaygain.flac";
 
-            File rgFile = File.Create(inFile);
+            File rgFile = TagLib.IO.File.Create(inFile);
             Assert.AreEqual(1.8d, rgFile.Tag.ReplayGainTrackGain);
             Assert.AreEqual(0.462341d, rgFile.Tag.ReplayGainTrackPeak);
             Assert.AreEqual(2.8d, rgFile.Tag.ReplayGainAlbumGain);
@@ -73,7 +73,7 @@ namespace TagLib.Tests.FileFormats
 
             System.IO.File.Copy(inFile, tempFile, true);
 
-            rgFile = File.Create(tempFile);
+            rgFile = TagLib.IO.File.Create(tempFile);
             rgFile.Tag.ReplayGainTrackGain = -1;
             rgFile.Tag.ReplayGainTrackPeak = 1;
             rgFile.Tag.ReplayGainAlbumGain = 2;
@@ -81,7 +81,7 @@ namespace TagLib.Tests.FileFormats
             rgFile.Save();
             rgFile.Dispose();
 
-            rgFile = File.Create(tempFile);
+            rgFile = TagLib.IO.File.Create(tempFile);
             Assert.AreEqual(-1d, rgFile.Tag.ReplayGainTrackGain);
             Assert.AreEqual(1d, rgFile.Tag.ReplayGainTrackPeak);
             Assert.AreEqual(2d, rgFile.Tag.ReplayGainAlbumGain);
@@ -93,7 +93,7 @@ namespace TagLib.Tests.FileFormats
             rgFile.Save();
             rgFile.Dispose();
             
-            rgFile = File.Create(tempFile);
+            rgFile = TagLib.IO.File.Create(tempFile);
             Assert.AreEqual(double.NaN, rgFile.Tag.ReplayGainTrackGain);
             Assert.AreEqual(double.NaN, rgFile.Tag.ReplayGainTrackPeak);
             Assert.AreEqual(double.NaN, rgFile.Tag.ReplayGainAlbumGain);

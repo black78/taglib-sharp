@@ -13,8 +13,8 @@ namespace TagLib.Tests.FileFormats
     {
         class Mpeg4TestFile : TagLib.Mpeg4.File
         {
-            public Mpeg4TestFile (string path)
-                :base (path)
+            public Mpeg4TestFile (File.IFileAbstraction file)
+				: base(file)
             {
 
             }
@@ -32,7 +32,7 @@ namespace TagLib.Tests.FileFormats
         [TestFixtureSetUp]
         public void Init()
         {
-            file = File.Create(sample_file);
+			file = TagLib.IO.File.Create(sample_file);
         }
 
 		[Test]
@@ -41,7 +41,7 @@ namespace TagLib.Tests.FileFormats
 			// This tests that a 'text' atom inside an 'stsd' atom is parsed correctly
 			// We just ensure that this does not throw an exception. I don't know how to
 			// verify the content is correct.
-			File.Create ("samples/apple_tags.m4a");
+			TagLib.IO.File.Create ("samples/apple_tags.m4a");
 		}
 
 		
@@ -49,7 +49,7 @@ namespace TagLib.Tests.FileFormats
 		public void bgo_676934 ()
 		{
 			// This file contains an atom which says its 800MB in size
-			var file = File.Create ("samples/bgo_676934.m4a");
+			var file = TagLib.IO.File.Create ("samples/bgo_676934.m4a");
 			Assert.IsTrue (file.CorruptionReasons.Any (), "#1");
 		}
 
@@ -59,14 +59,14 @@ namespace TagLib.Tests.FileFormats
 		{
 			// This file contains a musicbrainz track id "883821fc-9bbc-4e04-be79-b4b12c4c4a4e"
 			// This case also handles bgo #701690 as a proper value for the tag must be returned
-			var file = File.Create ("samples/bgo_701689.m4a");
+			var file = TagLib.IO.File.Create("samples/bgo_701689.m4a");
 			Assert.AreEqual ("883821fc-9bbc-4e04-be79-b4b12c4c4a4e", file.Tag.MusicBrainzTrackId, "#1");
 		}
 
         [Test]
         public void ReadAppleAacTags ()
         {
-            var file = new Mpeg4TestFile (aac_broken_tags);
+            var file = new Mpeg4TestFile (new IO.PlatformFile(aac_broken_tags));
             Assert.AreEqual (2, file.UdtaBoxes.Count, "#1");
 
             var first = file.UdtaBoxes [0];

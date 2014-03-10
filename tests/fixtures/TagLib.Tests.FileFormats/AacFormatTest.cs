@@ -15,7 +15,7 @@ namespace TagLib.Tests.FileFormats
 		[TestFixtureSetUp]
 		public void Init()
 		{
-			file = File.Create(sample_file);
+			file = TagLib.IO.File.Create(sample_file);
 		}
 
 		[Test]

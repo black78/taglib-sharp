@@ -13,7 +13,7 @@ namespace TagLib.Tests.FileFormats
 		[Test]
 		public void First ()
 		{
-			var tag = (Audible.Tag) File.Create(Path.Combine (BaseDirectory, "first.aa")).Tag;
+			var tag = (Audible.Tag)TagLib.IO.File.Create(Path.Combine(BaseDirectory, "first.aa")).Tag;
 			Assert.AreEqual (tag.Album, "Glyn Hughes"); // This is probably wrong. The publisher is not the album
 			Assert.AreEqual (tag.Author, "Ricky Gervais, Steve Merchant, & Karl Pilkington");
 			Assert.AreEqual (tag.Copyright, "&#169;2009 Ricky Gervais; (P)2009 Ricky Gervais");
@@ -26,7 +26,7 @@ namespace TagLib.Tests.FileFormats
 		[Ignore ("Not supported yet")]
 		public void Second ()
 		{
-			var tag = (Audible.Tag) File.Create(Path.Combine (BaseDirectory, "second.aax")).Tag;
+			var tag = (Audible.Tag) TagLib.IO.File.Create(Path.Combine (BaseDirectory, "second.aax")).Tag;
 			Assert.AreEqual (tag.Album, "Glyn Hughes"); // This is probably wrong. The publisher is not the album
 			Assert.AreEqual (tag.Author, "Ricky Gervais, Steve Merchant, & Karl Pilkington");
 			Assert.AreEqual (tag.Copyright, "&#169;2009 Ricky Gervais; (P)2009 Ricky Gervais");
@@ -38,7 +38,7 @@ namespace TagLib.Tests.FileFormats
 		[Test]
 		public void Third ()
 		{
-			var tag = (Audible.Tag) File.Create(Path.Combine (BaseDirectory, "third.aa")).Tag;
+			var tag = (Audible.Tag) TagLib.IO.File.Create(Path.Combine (BaseDirectory, "third.aa")).Tag;
 			Assert.AreEqual (tag.Album, "Glyn Hughes"); // This is probably wrong. The publisher is not the album
 			Assert.AreEqual (tag.Author, "Ricky Gervais, Steve Merchant, & Karl Pilkington");
 			Assert.AreEqual (tag.Copyright, "&#169;2009 Ricky Gervais; (P)2009 Ricky Gervais");
@@ -50,7 +50,7 @@ namespace TagLib.Tests.FileFormats
 		[Test]
 		public void Fourth ()
 		{
-			var tag = (Audible.Tag) File.Create(Path.Combine (BaseDirectory, "fourth.aa")).Tag;
+			var tag = (Audible.Tag) TagLib.IO.File.Create(Path.Combine (BaseDirectory, "fourth.aa")).Tag;
 			Assert.AreEqual (tag.Album, "Glyn Hughes"); // This is probably wrong. The publisher is not the album
 			Assert.AreEqual (tag.Author, "Ricky Gervais, Steve Merchant & Karl Pilkington");
 			Assert.AreEqual (tag.Copyright, "&#169;2010 Ricky Gervais; (P)2010 Ricky Gervais");

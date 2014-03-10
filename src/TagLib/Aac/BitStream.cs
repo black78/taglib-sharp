@@ -51,7 +51,7 @@ namespace TagLib.Aac
 		/// </param>
 		public BitStream(byte[] buffer)
 		{
-			Debug.Assert(buffer.Length == 7, "buffer.Length == 7", "buffer size invalid");
+			Debug.Assert(buffer.Length == 7, "buffer size invalid");
 			
 			if (buffer.Length != 7)
 				throw new ArgumentException("Buffer size must be 7 bytes");

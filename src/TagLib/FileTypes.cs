@@ -24,6 +24,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace TagLib {
 	/// <summary>
@@ -65,23 +67,23 @@ namespace TagLib {
 			typeof(TagLib.Audible.File),
 			typeof(TagLib.Flac.File),
 			typeof(TagLib.Matroska.File),
-			typeof(TagLib.Gif.File),
-			typeof(TagLib.Image.NoMetadata.File),
-			typeof(TagLib.Jpeg.File),
+			//typeof(TagLib.Gif.File),
+			//typeof(TagLib.Image.NoMetadata.File),
+			//typeof(TagLib.Jpeg.File),
 			typeof(TagLib.Mpeg4.File),
 			typeof(TagLib.Mpeg.AudioFile),
 			typeof(TagLib.Mpeg.File),
 			typeof(TagLib.MusePack.File),
 			typeof(TagLib.Ogg.File),
-			typeof(TagLib.Png.File),
+			//typeof(TagLib.Png.File),
 			typeof(TagLib.Riff.File),
-			typeof(TagLib.Tiff.Arw.File),
-			typeof(TagLib.Tiff.Cr2.File),
-			typeof(TagLib.Tiff.Dng.File),
-			typeof(TagLib.Tiff.File),
-			typeof(TagLib.Tiff.Nef.File),
-			typeof(TagLib.Tiff.Pef.File),
-			typeof(TagLib.Tiff.Rw2.File),
+			//typeof(TagLib.Tiff.Arw.File),
+			//typeof(TagLib.Tiff.Cr2.File),
+			//typeof(TagLib.Tiff.Dng.File),
+			//typeof(TagLib.Tiff.File),
+			//typeof(TagLib.Tiff.Nef.File),
+			//typeof(TagLib.Tiff.Pef.File),
+			//typeof(TagLib.Tiff.Rw2.File),
 			typeof(TagLib.WavPack.File)
 		};
 		
@@ -122,9 +124,8 @@ namespace TagLib {
 		/// </remarks>
 		public static void Register (Type type)
 		{
-			Attribute [] attrs = Attribute.GetCustomAttributes (type,
-				typeof(SupportedMimeType), false);
-			
+			var attrs = type.GetTypeInfo().GetCustomAttributes<SupportedMimeType>(false).ToArray();
+
 			if(attrs == null || attrs.Length == 0)
 				return;
 			

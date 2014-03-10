@@ -97,7 +97,7 @@ namespace TagLib {
 	/// 	Console.WriteLine ("That file is corrupt: {0}", e.ToString ());
 	///    </code>
 	/// </example>
-	[Serializable]
+	// [Serializable]
 	public class CorruptFileException : Exception
 	{
 		/// <summary>
@@ -159,10 +159,10 @@ namespace TagLib {
 		///    cref="CorruptFileException" /> implements the <see
 		///    cref="ISerializable" /> interface.
 		/// </remarks>
-		protected CorruptFileException (SerializationInfo info,
-		                                StreamingContext context)
-			: base(info, context)
-		{
-		}
+		//protected CorruptFileException (SerializationInfo info,
+		//								StreamingContext context)
+		//	: base(info, context)
+		//{
+		//}
 	}
 }

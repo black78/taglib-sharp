@@ -20,11 +20,11 @@ namespace TagLib.Tests.FileFormats
             try {
                 System.IO.File.Copy(sample_file, tmp_file);
                 
-                File tmp = File.Create (tmp_file);
+                File tmp = TagLib.IO.File.Create (tmp_file);
                 SetTags (tmp.Tag);
                 tmp.Save ();
                 
-                tmp = File.Create (tmp_file);
+                tmp = TagLib.IO.File.Create (tmp_file);
                 CheckTags (tmp.Tag);
             } finally {
 //                if (System.IO.File.Exists (tmp_file))
@@ -77,7 +77,7 @@ namespace TagLib.Tests.FileFormats
         public static void TestCorruptionResistance (string path)
         {
             try {
-                File.Create (path);
+                TagLib.IO.File.Create (path);
             } catch(CorruptFileException) {
             } catch(NullReferenceException e) {
                 throw e;

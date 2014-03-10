@@ -1,0 +1,4 @@
+﻿Commented [Serializable]
+	E:\Development\GitHub\taglib-sharp\src\TagLib\Riff\List.cs
+	E:\Development\GitHub\taglib-sharp\src\TagLib\UnsupportedFormatException.cs
+	E:\Development\GitHub\taglib-sharp\src\TagLib\CorruptFileException.cs

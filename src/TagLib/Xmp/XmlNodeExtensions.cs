@@ -23,51 +23,51 @@
 
 using System;
 using System.Collections.Generic;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace TagLib.Xmp
 {
 	internal static class XmlNodeExtensions
 	{
-		public static bool In (this XmlNode node, string ns)
+		public static bool In (this XAttribute node, string ns)
 		{
-			return node.NamespaceURI == ns;
+			return node.Name.Namespace.NamespaceName == ns;
 		}
 
-		public static bool Is (this XmlNode node, string ns, string name)
+		public static bool Is(this XAttribute node, string ns, string name)
 		{
-			return node.In (ns) && node.LocalName == name;
+			return node.In(ns) && node.Name.LocalName == name;
 		}
 
 		// 7.2.2 coreSyntaxTerms
 		//		rdf:RDF | rdf:ID | rdf:about | rdf:parseType | rdf:resource | rdf:nodeID | rdf:datatype
-		public static bool IsCoreSyntax (this XmlNode node)
+		public static bool IsCoreSyntax (this XAttribute node)
 		{
 			return node.In (XmpTag.RDF_NS) && (
-				node.LocalName == XmpTag.RDF_URI ||
-				node.LocalName == XmpTag.ID_URI ||
-				node.LocalName == XmpTag.ABOUT_URI ||
-				node.LocalName == XmpTag.PARSE_TYPE_URI ||
-				node.LocalName == XmpTag.RESOURCE_URI ||
-				node.LocalName == XmpTag.NODE_ID_URI ||
-				node.LocalName == XmpTag.DATA_TYPE_URI
+				node.Name.LocalName == XmpTag.RDF_URI ||
+				node.Name.LocalName == XmpTag.ID_URI ||
+				node.Name.LocalName == XmpTag.ABOUT_URI ||
+				node.Name.LocalName == XmpTag.PARSE_TYPE_URI ||
+				node.Name.LocalName == XmpTag.RESOURCE_URI ||
+				node.Name.LocalName == XmpTag.NODE_ID_URI ||
+				node.Name.LocalName == XmpTag.DATA_TYPE_URI
 					);
 		}
 
 		// 7.2.4 oldTerms
 		//		rdf:aboutEach | rdf:aboutEachPrefix | rdf:bagID
-		public static bool IsOld (this XmlNode node)
+		public static bool IsOld (this XAttribute node)
 		{
 			return node.In (XmpTag.RDF_NS) && (
-				node.LocalName == XmpTag.ABOUT_EACH_URI ||
-				node.LocalName == XmpTag.ABOUT_EACH_PREFIX_URI ||
-				node.LocalName == XmpTag.BAG_ID_URI
+				node.Name.LocalName == XmpTag.ABOUT_EACH_URI ||
+				node.Name.LocalName == XmpTag.ABOUT_EACH_PREFIX_URI ||
+				node.Name.LocalName == XmpTag.BAG_ID_URI
 				);
 		}
 
 		// 7.2.5 nodeElementURIs
 		//		anyURI - ( coreSyntaxTerms | rdf:li | oldTerms )
-		public static bool IsNodeElement (this XmlNode node)
+		public static bool IsNodeElement (this XAttribute node)
 		{
 			return !node.IsCoreSyntax () &&
 				!node.Is (XmpTag.RDF_NS, XmpTag.LI_URI) &&
@@ -76,7 +76,7 @@ namespace TagLib.Xmp
 
 		// 7.2.6 propertyElementURIs
 		//		anyURI - ( coreSyntaxTerms | rdf:Description | oldTerms )
-		public static bool IsPropertyElement (this XmlNode node)
+		public static bool IsPropertyElement(this XAttribute node)
 		{
 			return !node.IsCoreSyntax () &&
 				!node.Is (XmpTag.RDF_NS, XmpTag.DESCRIPTION_URI) &&
@@ -85,13 +85,13 @@ namespace TagLib.Xmp
 
 		// 7.2.7 propertyAttributeURIs
 		//		anyURI - ( coreSyntaxTerms | rdf:Description | rdf:li | oldTerms )
-		public static bool IsPropertyAttribute (this XmlNode node)
+		public static bool IsPropertyAttribute(this XObject node)
 		{
-			return node is XmlAttribute &&
-				!node.IsCoreSyntax () &&
-				!node.Is (XmpTag.RDF_NS, XmpTag.DESCRIPTION_URI) &&
-				!node.Is (XmpTag.RDF_NS, XmpTag.LI_URI) &&
-				!node.IsOld ();
+			return node is XAttribute &&
+				!((XAttribute)node).IsCoreSyntax () &&
+				!((XAttribute)node).Is (XmpTag.RDF_NS, XmpTag.DESCRIPTION_URI) &&
+				!((XAttribute)node).Is (XmpTag.RDF_NS, XmpTag.LI_URI) &&
+				!((XAttribute)node).IsOld ();
 		}
 	}
 }

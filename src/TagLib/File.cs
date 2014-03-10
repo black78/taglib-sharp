@@ -229,26 +229,6 @@ namespace TagLib {
 		
 		/// <summary>
 		///    Constructs and initializes a new instance of <see
-		///    cref="File" /> for a specified path in the local file
-		///    system.
-		/// </summary>
-		/// <param name="path">
-		///    A <see cref="string" /> object containing the path of the
-		///    file to use in the new instance.
-		/// </param>
-		/// <exception cref="ArgumentNullException">
-		///    <paramref name="path" /> is <see langword="null" />.
-		/// </exception>
-		protected File (string path)
-		{
-			if (path == null)
-				throw new ArgumentNullException ("path");
-			
-			file_abstraction = new LocalFileAbstraction (path);
-		}
-		
-		/// <summary>
-		///    Constructs and initializes a new instance of <see
 		///    cref="File" /> for a specified file abstraction.
 		/// </summary>
 		/// <param name="abstraction">
@@ -1197,32 +1177,6 @@ namespace TagLib {
 		
 		/// <summary>
 		///    Creates a new instance of a <see cref="File" /> subclass
-		///    for a specified path, guessing the mime-type from the
-		///    file's extension and using the average read style.
-		/// </summary>
-		/// <param name="path">
-		///    A <see cref="string" /> object specifying the file to
-		///    read from and write to.
-		/// </param>
-		/// <returns>
-		///    A new instance of <see cref="File" /> as read from the
-		///    specified path.
-		/// </returns>
-		/// <exception cref="CorruptFileException">
-		///    The file could not be read due to corruption.
-		/// </exception>
-		/// <exception cref="UnsupportedFormatException">
-		///    The file could not be read because the mime-type could
-		///    not be resolved or the library does not support an
-		///    internal feature of the file crucial to its reading.
-		/// </exception>
-		public static File Create (string path)
-		{
-			return Create(path, null, ReadStyle.Average);
-		}
-		
-		/// <summary>
-		///    Creates a new instance of a <see cref="File" /> subclass
 		///    for a specified file abstraction, guessing the mime-type
 		///    from the file's extension and using the average read
 		///    style.
@@ -1246,38 +1200,6 @@ namespace TagLib {
 		public static File Create (IFileAbstraction abstraction)
 		{
 			return Create(abstraction, null, ReadStyle.Average);
-		}
-		
-		/// <summary>
-		///    Creates a new instance of a <see cref="File" /> subclass
-		///    for a specified path and read style, guessing the
-		///    mime-type from the file's extension.
-		/// </summary>
-		/// <param name="path">
-		///    A <see cref="string" /> object specifying the file to
-		///    read from and write to.
-		/// </param>
-		/// <param name="propertiesStyle">
-		///    A <see cref="ReadStyle" /> value specifying the level of
-		///    detail to use when reading the media information from the
-		///    new instance.
-		/// </param>
-		/// <returns>
-		///    A new instance of <see cref="File" /> as read from the
-		///    specified path.
-		/// </returns>
-		/// <exception cref="CorruptFileException">
-		///    The file could not be read due to corruption.
-		/// </exception>
-		/// <exception cref="UnsupportedFormatException">
-		///    The file could not be read because the mime-type could
-		///    not be resolved or the library does not support an
-		///    internal feature of the file crucial to its reading.
-		/// </exception>
-		public static File Create (string path,
-		                           ReadStyle propertiesStyle)
-		{
-			return Create(path, null, propertiesStyle);
 		}
 		
 		/// <summary>
@@ -1311,45 +1233,7 @@ namespace TagLib {
 		{
 			return Create(abstraction, null, propertiesStyle);
 		}
-		
-		/// <summary>
-		///    Creates a new instance of a <see cref="File" /> subclass
-		///    for a specified path, mime-type, and read style.
-		/// </summary>
-		/// <param name="path">
-		///    A <see cref="string" /> object specifying the file to
-		///    read from and write to.
-		/// </param>
-		/// <param name="mimetype">
-		///    A <see cref="string" /> object containing the mime-type
-		///    to use when selecting the appropriate class to use, or
-		///    <see langword="null" /> if the extension in <paramref
-		///    name="abstraction" /> is to be used.
-		/// </param>
-		/// <param name="propertiesStyle">
-		///    A <see cref="ReadStyle" /> value specifying the level of
-		///    detail to use when reading the media information from the
-		///    new instance.
-		/// </param>
-		/// <returns>
-		///    A new instance of <see cref="File" /> as read from the
-		///    specified path.
-		/// </returns>
-		/// <exception cref="CorruptFileException">
-		///    The file could not be read due to corruption.
-		/// </exception>
-		/// <exception cref="UnsupportedFormatException">
-		///    The file could not be read because the mime-type could
-		///    not be resolved or the library does not support an
-		///    internal feature of the file crucial to its reading.
-		/// </exception>
-		public static File Create (string path, string mimetype,
-		                           ReadStyle propertiesStyle)
-		{
-			return Create (new LocalFileAbstraction (path),
-				mimetype, propertiesStyle);
-		}
-		
+					
 		/// <summary>
 		///    Creates a new instance of a <see cref="File" /> subclass
 		///    for a specified file abstraction, mime-type, and read
@@ -1395,8 +1279,7 @@ namespace TagLib {
 					ext = abstraction.Name.Substring (index,
 						abstraction.Name.Length - index);
 				
-				mimetype = "taglib/" + ext.ToLower(
-					CultureInfo.InvariantCulture);
+				mimetype = "taglib/" + ext.ToLower();
 			}
 			
 			foreach (FileTypeResolver resolver in file_type_resolvers) {
@@ -1477,119 +1360,122 @@ namespace TagLib {
         /// <param name="ex"></param>
 		private static void PrepareExceptionForRethrow(Exception ex)
 		{
-            var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
-            var mgr = new ObjectManager(null, ctx);
-            var si = new SerializationInfo(ex.GetType(), new FormatterConverter());
+			//var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
+			//var mgr = new ObjectManager(null, ctx);
+			//var si = new SerializationInfo(ex.GetType(), new FormatterConverter());
 
-            ex.GetObjectData(si, ctx);
-            mgr.RegisterObject(ex, 1, si); // prepare for SetObjectData
-            mgr.DoFixups(); // ObjectManager calls SetObjectData
+			//ex.GetObjectData(si, ctx);
+			//mgr.RegisterObject(ex, 1, si); // prepare for SetObjectData
+			//mgr.DoFixups(); // ObjectManager calls SetObjectData
 		}
 
 		#endregion
 		
 		
 		
-		#region Classes
+		//#region Classes
 		
-		/// <summary>
-		///    This class implements <see cref="IFileAbstraction" />
-		///    to provide support for accessing the local/standard file
-		///    system.
-		/// </summary>
-		/// <remarks>
-		///    This class is used as the standard file abstraction
-		///    throughout the library.
-		/// </remarks>
-		public class LocalFileAbstraction : IFileAbstraction
-		{
-			/// <summary>
-			///    Contains the name used to open the file.
-			/// </summary>
-			private string name;
+		///// <summary>
+		/////    This class implements <see cref="IFileAbstraction" />
+		/////    to provide support for accessing the local/standard file
+		/////    system.
+		///// </summary>
+		///// <remarks>
+		/////    This class is used as the standard file abstraction
+		/////    throughout the library.
+		///// </remarks>
+		//public class LocalFileAbstraction : IFileAbstraction
+		//{
+		//	/// <summary>
+		//	///    Contains the name used to open the file.
+		//	/// </summary>
+		//	private string name;
 			
-			/// <summary>
-			///    Constructs and initializes a new instance of
-			///    <see cref="LocalFileAbstraction" /> for a
-			///    specified path in the local file system.
-			/// </summary>
-			/// <param name="path">
-			///    A <see cref="string" /> object containing the
-			///    path of the file to use in the new instance.
-			/// </param>
-			/// <exception cref="ArgumentNullException">
-			///    <paramref name="path" /> is <see langword="null"
-			///    />.
-			/// </exception>
-			public LocalFileAbstraction (string path)
-			{
-				if (path == null)
-					throw new ArgumentNullException ("path");
+		//	/// <summary>
+		//	///    Constructs and initializes a new instance of
+		//	///    <see cref="LocalFileAbstraction" /> for a
+		//	///    specified path in the local file system.
+		//	/// </summary>
+		//	/// <param name="path">
+		//	///    A <see cref="string" /> object containing the
+		//	///    path of the file to use in the new instance.
+		//	/// </param>
+		//	/// <exception cref="ArgumentNullException">
+		//	///    <paramref name="path" /> is <see langword="null"
+		//	///    />.
+		//	/// </exception>
+		//	public LocalFileAbstraction (string path)
+		//	{
+		//		if (path == null)
+		//			throw new ArgumentNullException ("path");
 				
-				name = path;
-			}
+		//		name = path;
+		//	}
 			
-			/// <summary>
-			///    Gets the path of the file represented by the
-			///    current instance.
-			/// </summary>
-			/// <value>
-			///    A <see cref="string" /> object containing the
-			///    path of the file represented by the current
-			///    instance.
-			/// </value>
-			public string Name {
-				get {return name;}
-			}
+		//	/// <summary>
+		//	///    Gets the path of the file represented by the
+		//	///    current instance.
+		//	/// </summary>
+		//	/// <value>
+		//	///    A <see cref="string" /> object containing the
+		//	///    path of the file represented by the current
+		//	///    instance.
+		//	/// </value>
+		//	public string Name {
+		//		get {return name;}
+		//	}
 			
-			/// <summary>
-			///    Gets a new readable, seekable stream from the
-			///    file represented by the current instance.
-			/// </summary>
-			/// <value>
-			///    A new <see cref="System.IO.Stream" /> to be used
-			///    when reading the file represented by the current
-			///    instance.
-			/// </value>
-			public System.IO.Stream ReadStream {
-				get {return System.IO.File.Open (Name,
-					System.IO.FileMode.Open,
-					System.IO.FileAccess.Read,
-					System.IO.FileShare.Read);}
-			}
+		//	/// <summary>
+		//	///    Gets a new readable, seekable stream from the
+		//	///    file represented by the current instance.
+		//	/// </summary>
+		//	/// <value>
+		//	///    A new <see cref="System.IO.Stream" /> to be used
+		//	///    when reading the file represented by the current
+		//	///    instance.
+		//	/// </value>
+		//	public System.IO.Stream ReadStream 
+		//	{
+		//		get { throw new NotImplementedException(); }
+		//		//get {return System.IO.File.Open (Name,
+		//		//	System.IO.FileMode.Open,
+		//		//	System.IO.FileAccess.Read,
+		//		//	System.IO.FileShare.Read);}
+		//	}
 			
-			/// <summary>
-			///    Gets a new writable, seekable stream from the
-			///    file represented by the current instance.
-			/// </summary>
-			/// <value>
-			///    A new <see cref="System.IO.Stream" /> to be used
-			///    when writing to the file represented by the
-			///    current instance.
-			/// </value>
-			public System.IO.Stream WriteStream {
-				get {return System.IO.File.Open (Name,
-					System.IO.FileMode.Open,
-					System.IO.FileAccess.ReadWrite);}
-			}
+		//	/// <summary>
+		//	///    Gets a new writable, seekable stream from the
+		//	///    file represented by the current instance.
+		//	/// </summary>
+		//	/// <value>
+		//	///    A new <see cref="System.IO.Stream" /> to be used
+		//	///    when writing to the file represented by the
+		//	///    current instance.
+		//	/// </value>
+		//	public System.IO.Stream WriteStream {
+		//		get { throw new NotImplementedException(); }
+		//		//get {return System.IO.File.Open (Name,
+		//		//	System.IO.FileMode.Open,
+		//		//	System.IO.FileAccess.ReadWrite);}
+		//	}
 			
-			/// <summary>
-			///    Closes a stream created by the current instance.
-			/// </summary>
-			/// <param name="stream">
-			///    A <see cref="System.IO.Stream" /> object
-			///    created by the current instance.
-			/// </param>
-			public void CloseStream (System.IO.Stream stream)
-			{
-				if (stream == null)
-					throw new ArgumentNullException ("stream");
+		//	/// <summary>
+		//	///    Closes a stream created by the current instance.
+		//	/// </summary>
+		//	/// <param name="stream">
+		//	///    A <see cref="System.IO.Stream" /> object
+		//	///    created by the current instance.
+		//	/// </param>
+		//	public void CloseStream (System.IO.Stream stream)
+		//	{
+		//		if (stream == null)
+		//			throw new ArgumentNullException ("stream");
 				
-				stream.Close ();
-			}
-		}
+		//		stream.Dispose();
+		//	}
+		//}
 		
-		#endregion
+		//#endregion
 		
 		
 		

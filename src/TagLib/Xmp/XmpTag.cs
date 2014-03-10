@@ -23,7 +23,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
+using System.Xml.Linq;
 
 using TagLib.Image;
 using TagLib.IFD.Entries;
@@ -260,15 +262,16 @@ namespace TagLib.Xmp
 			// an XmlException. See also XmpNullValuesTest.cs.
 			if (data[data.Length-1] == '\0')
 				data = data.Substring(0, data.Length-1);
-			
-			XmlDocument doc = new XmlDocument (NameTable);
-			doc.LoadXml (data);
 
-			XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
+			XDocument doc = XDocument.Load(data);
+
+			XmlNamespaceManager nsmgr = new XmlNamespaceManager(NameTable);
 			nsmgr.AddNamespace("x", ADOBE_X_NS);
 			nsmgr.AddNamespace("rdf", RDF_NS);
 
-			XmlNode node = doc.SelectSingleNode("/x:xmpmeta/rdf:RDF", nsmgr);
+			var es = doc.Root.Elements(XName.Get("xmpmeta", ADOBE_X_NS));
+
+			XNode node = doc.Root.XPathSelectElement("/x:xmpmeta/rdf:RDF", nsmgr);
 			// Old versions of XMP were called XAP, fall back to this case (tested in sample_xap.jpg)
 			node = node ?? doc.SelectSingleNode("/x:xapmeta/rdf:RDF", nsmgr);
 			if (node == null)

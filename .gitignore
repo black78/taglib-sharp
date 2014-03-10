@@ -16,6 +16,8 @@ install-sh
 missing
 *.pc
 *.zip
+*.pdb
+*.dll
 tests/samples/tmp*
 docs/*.xml
 docs/*/*
@@ -29,3 +31,6 @@ tests/*.dll
 tests/*.xml
 test-results
 .*.swp
+*.suo
+*.csproj.user
+/packages

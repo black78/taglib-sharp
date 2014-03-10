@@ -22,7 +22,7 @@ namespace TagLib.Tests.FileFormats
 		[TestFixtureSetUp]
 		public void Init ()
 		{
-			file = File.Create (sample_file);
+			file = TagLib.IO.File.Create (sample_file);
 		}
 
 		[Test]
@@ -69,12 +69,12 @@ namespace TagLib.Tests.FileFormats
 
 			System.IO.File.Copy (sample_file, tmp_file);
 
-			File tmp = File.Create (tmp_file);
+			File tmp = TagLib.IO.File.Create (tmp_file);
 			Mpeg4.AppleTag tag = (Mpeg4.AppleTag) tmp.GetTag (TagTypes.Apple, false);
 			SetTags (tag);
 			tmp.Save ();
 
-			tmp = File.Create (tmp_file);
+			tmp = TagLib.IO.File.Create (tmp_file);
 			tag = (Mpeg4.AppleTag) tmp.GetTag (TagTypes.Apple, false);
 			CheckTags (tag);
 		}
