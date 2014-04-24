@@ -43,7 +43,7 @@ namespace TagLib.Tests.Images
 			files = new File[count];
 
 			for (int i = 0; i < count; i++)
-				files[i] = File.Create (GetSampleFilename (i));
+				files[i] = TagLib.IO.File.Create(GetSampleFilename(i));
 		}
 
 		[Test]
@@ -81,7 +81,7 @@ namespace TagLib.Tests.Images
 
 				tmp.Save ();
 
-				tmp = File.Create (GetTmpFilename (i));
+				tmp = TagLib.IO.File.Create(GetTmpFilename(i));
 
 				if ((TagTypes.TiffIFD & contained_types[i]) != 0)
 					CheckExif (tmp, i);

@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using TagLib.IO;
 using TagLib.Image;
 
 namespace TagLib.Tests.Images
@@ -13,7 +14,7 @@ namespace TagLib.Tests.Images
         [Test]
         public void TestXMPImageTag ()
         {
-            var file = TagLib.File.Create ("samples/sample_canon_bibble5.jpg") as TagLib.Image.File;
+			var file = TagLib.IO.File.Create("samples/sample_canon_bibble5.jpg") as TagLib.Image.File;
             Assert.IsNotNull (file);
 
             var tag = file.GetTag (TagTypes.XMP) as TagLib.Image.ImageTag;
@@ -41,7 +42,7 @@ namespace TagLib.Tests.Images
         [Test]
         public void TestXMPImageTag2 ()
         {
-            var file = TagLib.File.Create ("samples/sample_gimp_exiftool.jpg") as TagLib.Image.File;
+			var file = TagLib.IO.File.Create("samples/sample_gimp_exiftool.jpg") as TagLib.Image.File;
             Assert.IsNotNull (file);
 
             var tag = file.GetTag (TagTypes.XMP) as TagLib.Image.ImageTag;

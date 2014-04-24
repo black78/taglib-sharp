@@ -39,7 +39,7 @@ namespace TagLib.Tests.Images
 
 			// Store and reload file
 			file.Save ();
-			file = File.Create (tmp_file);
+			file = TagLib.IO.File.Create(tmp_file);
 
 			exif_tag = file.GetTag (TagTypes.TiffIFD, false) as IFDTag;
 			Assert.IsNotNull (exif_tag, "Tiff Tag not read");
@@ -84,7 +84,7 @@ namespace TagLib.Tests.Images
 
 			// Store and reload file
 			file.Save ();
-			file = File.Create (tmp_file);
+			file = TagLib.IO.File.Create(tmp_file);
 
 			xmp_tag = file.GetTag (TagTypes.XMP, false) as XmpTag;
 			Assert.IsNotNull (xmp_tag, "XMP Tag not read");
@@ -117,7 +117,7 @@ namespace TagLib.Tests.Images
 
 			// Store and reload file
 			file.Save ();
-			file = File.Create (tmp_file);
+			file = TagLib.IO.File.Create(tmp_file);
 
 			xmp_tag = file.GetTag (TagTypes.XMP, false) as XmpTag;
 			Assert.IsNotNull (xmp_tag, "XMP Tag not read");
@@ -155,7 +155,7 @@ namespace TagLib.Tests.Images
 
 			// Store and reload file
 			file.Save ();
-			file = File.Create (tmp_file) as Image.File;
+			file = TagLib.IO.File.Create (tmp_file) as Image.File;
 
 			Assert.IsNotNull (file, "tmp file");
 
@@ -208,7 +208,7 @@ namespace TagLib.Tests.Images
 
 			// Store and reload file
 			file.Save ();
-			file = File.Create (tmp_file);
+			file = TagLib.IO.File.Create(tmp_file);
 
 			ifd = file.GetTag (TagTypes.TiffIFD, false) as IFDTag;
 			Assert.IsNotNull (ifd, "Tiff IFD not read");

@@ -1,4 +1,3 @@
-using Gdk;
 using System;
 using NUnit.Framework;
 
@@ -9,7 +8,7 @@ namespace TagLib.Tests.Images.Validators
 		static ImageTest () {
 			// Initialize GDK
 			var args = Environment.GetCommandLineArgs ();
-			Global.InitCheck (ref args);
+			// Global.InitCheck (ref args);
 		}
 
 		string pre_hash;
@@ -126,7 +125,7 @@ namespace TagLib.Tests.Images.Validators
 
 		Image.File ReadFile (string path)
 		{
-			return File.Create (path) as Image.File;
+			return TagLib.IO.File.Create(path) as Image.File;
 		}
 
 		/// <summary>
@@ -141,16 +140,18 @@ namespace TagLib.Tests.Images.Validators
 
 		string ReadImageData (Image.File file)
 		{
-			if (!IsSupportedImageFile (file))
-				Assert.Fail("Unsupported type for data reading: "+file);
+			throw new NotImplementedException();
 
-			file.Mode = File.AccessMode.Read;
-			ByteVector v = file.ReadBlock ((int) file.Length);
-			byte [] result = null;
-			using (Pixbuf buf = new Pixbuf(v.Data))
-				result = buf.SaveToBuffer("png");
-			file.Mode = File.AccessMode.Closed;
-			return Utils.Md5Encode (result);
+			//if (!IsSupportedImageFile (file))
+			//	Assert.Fail("Unsupported type for data reading: "+file);
+
+			//file.Mode = File.AccessMode.Read;
+			//ByteVector v = file.ReadBlock ((int) file.Length);
+			//byte [] result = null;
+			//using (Pixbuf buf = new Pixbuf(v.Data))
+			//	result = buf.SaveToBuffer("png");
+			//file.Mode = File.AccessMode.Closed;
+			//return Utils.Md5Encode (result);
 		}
 
 		void ValidateImageData ()

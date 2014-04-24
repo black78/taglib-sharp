@@ -4,6 +4,7 @@ using System.Text;
 using System.Security.Cryptography;
 
 using TagLib;
+using TagLib.IO;
 
 
 namespace TagLib.Tests.Images
@@ -20,7 +21,7 @@ namespace TagLib.Tests.Images
                 System.IO.File.Delete (tmp_file);
 
 			System.IO.File.Copy (sample_file, tmp_file);
-			File tmp = File.Create (tmp_file);
+			File tmp = TagLib.IO.File.Create(tmp_file);
 
 			return tmp;
 		}

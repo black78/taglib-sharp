@@ -23,7 +23,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace TagLib.Xmp
 {
@@ -66,7 +68,7 @@ namespace TagLib.Xmp
 		public string Name {
 			get { return name; }
 			internal set {
-				if (name != null)
+				if (!string.IsNullOrEmpty(name))
 					throw new Exception ("Cannot change named node");
 
 				if (value == null)
@@ -288,66 +290,66 @@ namespace TagLib.Xmp
 		/// <param name="parent">
 		///    A <see cref="XmlNode"/> to render the current instance as child of.
 		/// </param>
-		public void RenderInto (XmlNode parent)
+		public void RenderInto (XElement parent)
 		{
 			if (IsRootNode) {
 				AddAllChildrenTo (parent);
-
-			} else if (IsReallySimpleType && parent.Attributes.GetNamedItem (XmpTag.PARSE_TYPE_URI, XmpTag.RDF_NS) == null) {
+			
+			} else if (IsReallySimpleType && parent.Attribute(XName.Get(XmpTag.PARSE_TYPE_URI, XmpTag.RDF_NS)) == null) {
 				// Simple values can be added as attributes of the parent node. Not allowed when the parent has an rdf:parseType.
-				XmlAttribute attr = XmpTag.CreateAttribute (parent.OwnerDocument, Name, Namespace);
+				var attr = XmpTag.CreateAttribute (parent.Document, Name, Namespace);
 				attr.Value = Value;
-				parent.Attributes.Append (attr);
+				parent.Add (attr);
 
 			} else if (Type == XmpNodeType.Simple || Type == XmpNodeType.Struct) {
-				var node = XmpTag.CreateNode (parent.OwnerDocument, Name, Namespace);
-				node.InnerText = Value;
+				var node = XmpTag.CreateNode (parent.Document, Name, Namespace);
+				node.Value = Value;
 
 				if (Type == XmpNodeType.Struct) {
 					// Structured types are always handled as a parseType=Resource node. This way, IsReallySimpleType will
 					// not match for child nodes, which makes sure they are added as extra nodes to this node. Does the
 					// trick well, unit tests that prove this are in XmpSpecTest.
-					XmlAttribute attr = XmpTag.CreateAttribute (parent.OwnerDocument, XmpTag.PARSE_TYPE_URI, XmpTag.RDF_NS);
+					var attr = XmpTag.CreateAttribute (parent.Document, XmpTag.PARSE_TYPE_URI, XmpTag.RDF_NS);
 					attr.Value = "Resource";
-					node.Attributes.Append (attr);
+					node.Add (attr);
 				}
 
 				AddAllQualifiersTo (node);
 				AddAllChildrenTo (node);
-				parent.AppendChild (node);
+				parent.Add (node);
 
 			} else if (Type == XmpNodeType.Bag) {
-				var node = XmpTag.CreateNode (parent.OwnerDocument, Name, Namespace);
+				var node = XmpTag.CreateNode (parent.Document, Name, Namespace);
 				// TODO: Add all qualifiers.
 				if (QualifierCount > 0)
 					throw new NotImplementedException ();
-				var bag = XmpTag.CreateNode (parent.OwnerDocument, XmpTag.BAG_URI, XmpTag.RDF_NS);
+				var bag = XmpTag.CreateNode (parent.Document, XmpTag.BAG_URI, XmpTag.RDF_NS);
 				foreach (var child in Children)
 					child.RenderInto (bag);
-				node.AppendChild (bag);
-				parent.AppendChild (node);
+				node.Add (bag);
+				parent.Add (node);
 
 			} else if (Type == XmpNodeType.Alt) {
-				var node = XmpTag.CreateNode (parent.OwnerDocument, Name, Namespace);
+				var node = XmpTag.CreateNode (parent.Document, Name, Namespace);
 				// TODO: Add all qualifiers.
 				if (QualifierCount > 0)
 					throw new NotImplementedException ();
-				var bag = XmpTag.CreateNode (parent.OwnerDocument, XmpTag.ALT_URI, XmpTag.RDF_NS);
+				var bag = XmpTag.CreateNode (parent.Document, XmpTag.ALT_URI, XmpTag.RDF_NS);
 				foreach (var child in Children)
 					child.RenderInto (bag);
-				node.AppendChild (bag);
-				parent.AppendChild (node);
+				node.Add (bag);
+				parent.Add (node);
 
 			} else if (Type == XmpNodeType.Seq) {
-				var node = XmpTag.CreateNode (parent.OwnerDocument, Name, Namespace);
+				var node = XmpTag.CreateNode (parent.Document, Name, Namespace);
 				// TODO: Add all qualifiers.
 				if (QualifierCount > 0)
 					throw new NotImplementedException ();
-				var bag = XmpTag.CreateNode (parent.OwnerDocument, XmpTag.SEQ_URI, XmpTag.RDF_NS);
+				var bag = XmpTag.CreateNode (parent.Document, XmpTag.SEQ_URI, XmpTag.RDF_NS);
 				foreach (var child in Children)
 					child.RenderInto (bag);
-				node.AppendChild (bag);
-				parent.AppendChild (node);
+				node.Add (bag);
+				parent.Add (node);
 
 			} else {
 				// Probably some combination of things we don't fully cover yet.
@@ -362,9 +364,9 @@ namespace TagLib.Xmp
 #region Internal Methods
 
 		internal void Dump (string prefix) {
-			Console.WriteLine ("{0}{1}{2} ({4}) = \"{3}\"", prefix, Namespace, Name, Value, Type);
+			Debug.WriteLine ("{0}{1}{2} ({4}) = \"{3}\"", prefix, Namespace, Name, Value, Type);
 			if (qualifiers != null) {
-				Console.WriteLine ("{0}Qualifiers:", prefix);
+				Debug.WriteLine("{0}Qualifiers:", prefix);
 
 				foreach (string ns in qualifiers.Keys) {
 					foreach (string name in qualifiers [ns].Keys) {
@@ -373,7 +375,7 @@ namespace TagLib.Xmp
 				}
 			}
 			if (children != null) {
-				Console.WriteLine ("{0}Children:", prefix);
+				Debug.WriteLine("{0}Children:", prefix);
 
 				foreach (XmpNode child in children) {
 					child.Dump (prefix+"  ->  ");
@@ -404,20 +406,20 @@ namespace TagLib.Xmp
 			get { return Name == String.Empty && Namespace == String.Empty; }
 		}
 
-		private void AddAllQualifiersTo (XmlNode xml)
+		private void AddAllQualifiersTo (XElement xml)
 		{
 			if (qualifiers == null)
 				return;
 			foreach (var collection in qualifiers.Values) {
 				foreach (XmpNode node in collection.Values) {
-					XmlAttribute attr = XmpTag.CreateAttribute (xml.OwnerDocument, node.Name, node.Namespace);
+					var attr = XmpTag.CreateAttribute (xml.Document, node.Name, node.Namespace);
 					attr.Value = node.Value;
-					xml.Attributes.Append (attr);
+					xml.Add (attr);
 				}
 			}
 		}
 
-		private void AddAllChildrenTo (XmlNode parent)
+		private void AddAllChildrenTo (XElement parent)
 		{
 			if (children == null)
 				return;

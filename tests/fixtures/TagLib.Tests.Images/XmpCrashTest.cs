@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using TagLib;
+using TagLib.IO;
 
 namespace TagLib.Tests.Images
 {
@@ -17,7 +18,7 @@ namespace TagLib.Tests.Images
 		[Test]
 		public void ParseXmp ()
 		{
-			var file = File.Create (sample_file) as Image.File;
+			var file = TagLib.IO.File.Create(sample_file) as Image.File;
 			Assert.IsNotNull (file, "file");
 
 			var tag = file.ImageTag;

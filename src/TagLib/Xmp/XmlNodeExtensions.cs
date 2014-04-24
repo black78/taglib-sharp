@@ -39,11 +39,34 @@ namespace TagLib.Xmp
 			return node.In(ns) && node.Name.LocalName == name;
 		}
 
+		public static bool In(this XElement node, string ns)
+		{
+			return node.Name.Namespace.NamespaceName == ns;
+		}
+
+		public static bool Is(this XElement node, string ns, string name)
+		{
+			return node.In(ns) && node.Name.LocalName == name;
+		}
+
 		// 7.2.2 coreSyntaxTerms
 		//		rdf:RDF | rdf:ID | rdf:about | rdf:parseType | rdf:resource | rdf:nodeID | rdf:datatype
 		public static bool IsCoreSyntax (this XAttribute node)
 		{
 			return node.In (XmpTag.RDF_NS) && (
+				node.Name.LocalName == XmpTag.RDF_URI ||
+				node.Name.LocalName == XmpTag.ID_URI ||
+				node.Name.LocalName == XmpTag.ABOUT_URI ||
+				node.Name.LocalName == XmpTag.PARSE_TYPE_URI ||
+				node.Name.LocalName == XmpTag.RESOURCE_URI ||
+				node.Name.LocalName == XmpTag.NODE_ID_URI ||
+				node.Name.LocalName == XmpTag.DATA_TYPE_URI
+					);
+		}
+
+		public static bool IsCoreSyntax(this XElement node)
+		{
+			return node.In(XmpTag.RDF_NS) && (
 				node.Name.LocalName == XmpTag.RDF_URI ||
 				node.Name.LocalName == XmpTag.ID_URI ||
 				node.Name.LocalName == XmpTag.ABOUT_URI ||
@@ -65,9 +88,18 @@ namespace TagLib.Xmp
 				);
 		}
 
+		public static bool IsOld(this XElement node)
+		{
+			return node.In(XmpTag.RDF_NS) && (
+				node.Name.LocalName == XmpTag.ABOUT_EACH_URI ||
+				node.Name.LocalName == XmpTag.ABOUT_EACH_PREFIX_URI ||
+				node.Name.LocalName == XmpTag.BAG_ID_URI
+				);
+		}
+
 		// 7.2.5 nodeElementURIs
 		//		anyURI - ( coreSyntaxTerms | rdf:li | oldTerms )
-		public static bool IsNodeElement (this XAttribute node)
+		public static bool IsNodeElement (this XElement node)
 		{
 			return !node.IsCoreSyntax () &&
 				!node.Is (XmpTag.RDF_NS, XmpTag.LI_URI) &&
@@ -76,7 +108,7 @@ namespace TagLib.Xmp
 
 		// 7.2.6 propertyElementURIs
 		//		anyURI - ( coreSyntaxTerms | rdf:Description | oldTerms )
-		public static bool IsPropertyElement(this XAttribute node)
+		public static bool IsPropertyElement(this XElement node)
 		{
 			return !node.IsCoreSyntax () &&
 				!node.Is (XmpTag.RDF_NS, XmpTag.DESCRIPTION_URI) &&

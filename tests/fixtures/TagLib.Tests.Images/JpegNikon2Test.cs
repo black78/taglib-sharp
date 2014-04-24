@@ -21,7 +21,7 @@ namespace TagLib.Tests.Images
 
 		[TestFixtureSetUp]
 		public void Init () {
-			file = File.Create (sample_file);
+			file = TagLib.IO.File.Create(sample_file);
 		}
 
 		[Test]
@@ -54,7 +54,7 @@ namespace TagLib.Tests.Images
 			File tmp = Utils.CreateTmpFile (sample_file, tmp_file);
 			tmp.Save ();
 
-			tmp = File.Create (tmp_file);
+			tmp = TagLib.IO.File.Create(tmp_file);
 
 			CheckTags (tmp);
 			CheckExif (tmp);

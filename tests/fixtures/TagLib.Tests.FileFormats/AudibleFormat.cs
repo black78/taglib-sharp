@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using TagLib;
+using TagLib.IO;
 using System.IO;
 
 namespace TagLib.Tests.FileFormats

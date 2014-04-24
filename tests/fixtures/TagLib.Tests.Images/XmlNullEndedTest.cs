@@ -3,6 +3,7 @@ using NUnit.Framework;
 using TagLib;
 using TagLib.Image;
 using TagLib.Xmp;
+using TagLib.IO;
 
 namespace TagLib.Tests.Images
 {
@@ -17,7 +18,7 @@ namespace TagLib.Tests.Images
 		[Test]
 		public void ParseXmp ()
 		{
-			var file = File.Create (sample_file, "taglib/jpeg", ReadStyle.Average) as Image.File;
+			var file = TagLib.IO.File.Create(sample_file, "taglib/jpeg", ReadStyle.Average) as Image.File;
 			Assert.IsNotNull (file, "file");
 
 			var tag = file.ImageTag;

@@ -29,6 +29,9 @@ using System.Xml.Linq;
 
 using TagLib.Image;
 using TagLib.IFD.Entries;
+using System.IO;
+using System.Text;
+using System.Diagnostics;
 
 
 namespace TagLib.Xmp
@@ -263,17 +266,21 @@ namespace TagLib.Xmp
 			if (data[data.Length-1] == '\0')
 				data = data.Substring(0, data.Length-1);
 
-			XDocument doc = XDocument.Load(data);
+			XDocument doc = XDocument.Parse(data);
 
-			XmlNamespaceManager nsmgr = new XmlNamespaceManager(NameTable);
-			nsmgr.AddNamespace("x", ADOBE_X_NS);
-			nsmgr.AddNamespace("rdf", RDF_NS);
+			var meta = doc.Element(XName.Get("xmpmeta", ADOBE_X_NS));
+			if (meta == null) 
+			{
+				meta = doc.Root.Element(XName.Get("xapmeta", ADOBE_X_NS));
+			}
 
-			var es = doc.Root.Elements(XName.Get("xmpmeta", ADOBE_X_NS));
+			if (meta == null) 
+			{
+				throw new CorruptFileException();
+			}
 
-			XNode node = doc.Root.XPathSelectElement("/x:xmpmeta/rdf:RDF", nsmgr);
-			// Old versions of XMP were called XAP, fall back to this case (tested in sample_xap.jpg)
-			node = node ?? doc.SelectSingleNode("/x:xapmeta/rdf:RDF", nsmgr);
+			var node = meta.Element(XName.Get("RDF", RDF_NS));
+
 			if (node == null)
 				throw new CorruptFileException ();
 
@@ -289,36 +296,53 @@ namespace TagLib.Xmp
 		//		start-element ( URI == rdf:RDF, attributes == set() )
 		//		nodeElementList
 		//		end-element()
-		private XmpNode ParseRDF (XmlNode rdf_node, TagLib.File file)
+		private XmpNode ParseRDF (XElement rdf_node, TagLib.File file)
 		{
 			XmpNode top = new XmpNode (String.Empty, String.Empty);
-			foreach (XmlNode node in rdf_node.ChildNodes) {
-				if (node is XmlWhitespace)
-					continue;
+			var nameDescription = XName.Get(DESCRIPTION_URI, RDF_NS);
 
-				if (node.Is (RDF_NS, DESCRIPTION_URI)) {
-					var attr = node.Attributes.GetNamedItem (RDF_NS, ABOUT_URI) as XmlAttribute;
-					if (attr != null) {
-						if (top.Name != String.Empty && top.Name != attr.InnerText)
-							throw new CorruptFileException ("Multiple inconsistent rdf:about values!");
-						top.Name = attr.InnerText;
-					}
-					continue;
-				}
+			var attrs =
+				rdf_node.Elements(XName.Get(DESCRIPTION_URI, RDF_NS))
+				.Select(d => d.Attribute(XName.Get(ABOUT_URI, RDF_NS)))
+				.Where(a => a != null);
 
-				file.MarkAsCorrupt ("Cannot have anything other than rdf:Description at the top level");
-				return top;
+			foreach (var attr in attrs) 
+			{
+				if (top.Name != String.Empty && top.Name != attr.Value)
+					throw new CorruptFileException("Multiple inconsistent rdf:about values!");
+				
+				top.Name = attr.Value;
 			}
+
+			//foreach (var node in rdf_node.Elements())
+			//{
+			//	if (node.NodeType == XmlNodeType.Whitespace)
+			//		continue;
+
+
+			//	if (node.Name == nameDescription) {
+			//		var attr = node.Attribute(XName.Get(ABOUT_URI, RDF_NS));
+			//		if (attr != null) {
+			//			if (top.Name != String.Empty && top.Name != attr.Value)
+			//				throw new CorruptFileException ("Multiple inconsistent rdf:about values!");
+			//			top.Name = attr.Value;
+			//		}
+			//		continue;
+			//	}
+
+			//	file.MarkAsCorrupt ("Cannot have anything other than rdf:Description at the top level");
+			//	return top;
+			//}
 			ParseNodeElementList (top, rdf_node);
 			return top;
 		}
 
 		// 7.2.10 nodeElementList
 		//		ws* ( nodeElement ws* )*
-		private void ParseNodeElementList (XmpNode parent, XmlNode xml_parent)
+		private void ParseNodeElementList (XmpNode parent, XElement xml_parent)
 		{
-			foreach (XmlNode node in xml_parent.ChildNodes) {
-				if (node is XmlWhitespace)
+			foreach (var node in xml_parent.Elements()) {
+				if (node.NodeType == XmlNodeType.Whitespace)
 					continue;
 				ParseNodeElement (parent, node);
 			}
@@ -332,9 +356,9 @@ namespace TagLib.Xmp
 		//
 		// 7.2.13 propertyEltList
 		//		ws* ( propertyElt ws* )*
-		private void ParseNodeElement (XmpNode parent, XmlNode node)
+		private void ParseNodeElement (XmpNode parent, XElement node)
 		{
-			if (!node.IsNodeElement ())
+			if (node.NodeType != XmlNodeType.Element)
 				throw new CorruptFileException ("Unexpected node found, invalid RDF?");
 
 			if (node.Is (RDF_NS, SEQ_URI)) {
@@ -349,19 +373,17 @@ namespace TagLib.Xmp
 				throw new Exception ("Unknown nodeelement found! Perhaps an unimplemented collection?");
 			}
 
-			foreach (XmlAttribute attr in node.Attributes) {
+			foreach (XAttribute attr in node.Attributes()) {
 				if (attr.In (XMLNS_NS))
 					continue;
 				if (attr.Is (RDF_NS, ID_URI) || attr.Is (RDF_NS, NODE_ID_URI) || attr.Is (RDF_NS, ABOUT_URI))
 					continue;
 				if (attr.Is (XML_NS, LANG_URI))
 					throw new CorruptFileException ("xml:lang is not allowed here!");
-				parent.AddChild (new XmpNode (attr.NamespaceURI, attr.LocalName, attr.InnerText));
+				parent.AddChild (new XmpNode (attr.Name.NamespaceName, attr.Name.LocalName, attr.Value));
 			}
 
-			foreach (XmlNode child in node.ChildNodes) {
-				if (child is XmlWhitespace || child is XmlComment)
-					continue;
+			foreach (var child in node.Elements()) {
 				ParsePropertyElement (parent, child);
 			}
 		}
@@ -370,11 +392,11 @@ namespace TagLib.Xmp
 		//		resourcePropertyElt | literalPropertyElt | parseTypeLiteralPropertyElt |
 		//		parseTypeResourcePropertyElt | parseTypeCollectionPropertyElt |
 		//		parseTypeOtherPropertyElt | emptyPropertyElt
-		private void ParsePropertyElement (XmpNode parent, XmlNode node)
+		private void ParsePropertyElement (XmpNode parent, XElement node)
 		{
 			int count = 0;
 			bool has_other = false;
-			foreach (XmlAttribute attr in node.Attributes) {
+			foreach (XAttribute attr in node.Attributes()) {
 				if (!attr.In (XMLNS_NS))
 					count++;
 
@@ -386,12 +408,12 @@ namespace TagLib.Xmp
 				ParseEmptyPropertyElement (parent, node);
 			} else {
 				if (!has_other) {
-					if (!node.HasChildNodes) {
+					if (!node.Nodes().Any()) {
 						ParseEmptyPropertyElement (parent, node);
 					} else {
 						bool only_text = true;
-						foreach (XmlNode child in node.ChildNodes) {
-							if (!(child is XmlText))
+						foreach (var child in node.Nodes()) {
+							if (!(child.NodeType == XmlNodeType.Text))
 								only_text = false;
 						}
 
@@ -402,7 +424,7 @@ namespace TagLib.Xmp
 						}
 					}
 				} else {
-					foreach (XmlAttribute attr in node.Attributes) {
+					foreach (var attr in node.Attributes()) {
 						if (attr.Is (XML_NS, LANG_URI) || attr.Is (RDF_NS, ID_URI) || attr.In (XMLNS_NS))
 							continue;
 
@@ -410,11 +432,11 @@ namespace TagLib.Xmp
 							ParseLiteralPropertyElement (parent, node);
 						} else if (!attr.Is (RDF_NS, PARSE_TYPE_URI)) {
 							ParseEmptyPropertyElement (parent, node);
-						} else if (attr.InnerText.Equals ("Resource")) {
+						} else if (attr.Value.Equals ("Resource")) {
 							ParseTypeResourcePropertyElement (parent, node);
 						} else {
 							// Neither Literal, Collection or anything else is allowed
-							throw new CorruptFileException (String.Format ("This is not allowed in XMP! Bad XMP: {0}", node.OuterXml));
+							throw new CorruptFileException (String.Format ("This is not allowed in XMP! Bad XMP: {0}", node));
 						}
 					}
 				}
@@ -425,30 +447,25 @@ namespace TagLib.Xmp
 		//		start-element ( URI == propertyElementURIs, attributes == set ( idAttr? ) )
 		//		ws* nodeElement ws*
 		//		end-element()
-		private void ParseResourcePropertyElement (XmpNode parent, XmlNode node)
+		private void ParseResourcePropertyElement (XmpNode parent, XElement node)
 		{
 			if (!node.IsPropertyElement ())
 				throw new CorruptFileException ("Invalid property");
 
-			XmpNode new_node = new XmpNode (node.NamespaceURI, node.LocalName);
-			foreach (XmlAttribute attr in node.Attributes) {
+			XmpNode new_node = new XmpNode (node.Name.NamespaceName, node.Name.LocalName);
+			foreach (var attr in node.Attributes()) {
 				if (attr.Is (XML_NS, LANG_URI)) {
-					new_node.AddQualifier (new XmpNode (XML_NS, LANG_URI, attr.InnerText));
+					new_node.AddQualifier (new XmpNode (XML_NS, LANG_URI, attr.Value));
 				} else if (attr.Is (RDF_NS, ID_URI) || attr.In (XMLNS_NS)) {
 					continue;
 				}
 
-				throw new CorruptFileException (String.Format ("Invalid attribute: {0}", attr.OuterXml));
+				throw new CorruptFileException (String.Format ("Invalid attribute: {0}", attr.ToString()));
 			}
 
 			bool has_xml_children = false;
-			foreach (XmlNode child in node.ChildNodes) {
-				if (child is XmlWhitespace)
-					continue;
-				if (child is XmlText)
-					throw new CorruptFileException ("Can't have text here!");
+			foreach (var child in node.Elements()) {
 				has_xml_children = true;
-
 				ParseNodeElement (new_node, child);
 			}
 
@@ -462,33 +479,31 @@ namespace TagLib.Xmp
 		//		start-element ( URI == propertyElementURIs, attributes == set ( idAttr?, datatypeAttr?) )
 		//		text()
 		//		end-element()
-		private void ParseLiteralPropertyElement (XmpNode parent, XmlNode node)
+		private void ParseLiteralPropertyElement (XmpNode parent, XElement node)
 		{
 			if (!node.IsPropertyElement ())
 				throw new CorruptFileException ("Invalid property");
-			parent.AddChild (CreateTextPropertyWithQualifiers (node, node.InnerText));
+			parent.AddChild (CreateTextPropertyWithQualifiers (node, node.Value));
 		}
 
 		// 7.2.18 parseTypeResourcePropertyElt
 		//		start-element ( URI == propertyElementURIs, attributes == set ( idAttr?, parseResource ) )
 		//		propertyEltList
 		//		end-element()
-		private void ParseTypeResourcePropertyElement (XmpNode parent, XmlNode node)
+		private void ParseTypeResourcePropertyElement (XmpNode parent, XElement node)
 		{
 			if (!node.IsPropertyElement ())
 				throw new CorruptFileException ("Invalid property");
 
-			XmpNode new_node = new XmpNode (node.NamespaceURI, node.LocalName);
+			XmpNode new_node = new XmpNode (node.Name.NamespaceName, node.Name.LocalName);
 			new_node.Type = XmpNodeType.Struct;
 
-			foreach (XmlNode attr in node.Attributes) {
+			foreach (var attr in node.Attributes()) {
 				if (attr.Is (XML_NS, LANG_URI))
-					new_node.AddQualifier (new XmpNode (XML_NS, LANG_URI, attr.InnerText));
+					new_node.AddQualifier (new XmpNode (XML_NS, LANG_URI, attr.Value));
 			}
 
-			foreach (XmlNode child in node.ChildNodes) {
-				if (child is XmlWhitespace || child is XmlComment)
-					continue;
+			foreach (var child in node.Elements()) {
 				ParsePropertyElement (new_node, child);
 			}
 
@@ -499,49 +514,49 @@ namespace TagLib.Xmp
 		//		start-element ( URI == propertyElementURIs,
 		//						attributes == set ( idAttr?, ( resourceAttr | nodeIdAttr )?, propertyAttr* ) )
 		//		end-element()
-		private void ParseEmptyPropertyElement (XmpNode parent, XmlNode node)
+		private void ParseEmptyPropertyElement (XmpNode parent, XElement node)
 		{
 			if (!node.IsPropertyElement ())
 				throw new CorruptFileException ("Invalid property");
-			if (node.HasChildNodes)
-				throw new CorruptFileException (String.Format ("Can't have content in this node! Node: {0}", node.OuterXml));
+			if (node.Nodes().Any())
+				throw new CorruptFileException (String.Format ("Can't have content in this node! Node: {0}", node.ToString()));
 
-			var rdf_value = node.Attributes.GetNamedItem (VALUE_URI, RDF_NS) as XmlAttribute;
-			var rdf_resource = node.Attributes.GetNamedItem (RESOURCE_URI, RDF_NS) as XmlAttribute;
+			var rdf_value = node.Attribute (XName.Get(VALUE_URI, RDF_NS));
+			var rdf_resource = node.Attribute(XName.Get(RESOURCE_URI, RDF_NS));
 
 			// Options 1 and 2
 			var simple_prop_val = rdf_value ?? rdf_resource ?? null;
 			if (simple_prop_val != null) {
-				string value = simple_prop_val.InnerText;
+				string value = simple_prop_val.Value;
 				parent.AddChild (CreateTextPropertyWithQualifiers (node, value));
 				return;
 			}
 
 			// Options 3 & 4
-			var new_node = new XmpNode (node.NamespaceURI, node.LocalName);
-			foreach (XmlAttribute a in node.Attributes) {
+			var new_node = new XmpNode (node.Name.NamespaceName, node.Name.LocalName);
+			foreach (var a in node.Attributes()) {
 				if (a.Is(RDF_NS, ID_URI) || a.Is(RDF_NS, NODE_ID_URI)) {
 					continue;
 				} else if (a.In (XMLNS_NS)) {
 					continue;
 				} else if (a.Is (XML_NS, LANG_URI)) {
-					new_node.AddQualifier (new XmpNode (XML_NS, LANG_URI, a.InnerText));
+					new_node.AddQualifier (new XmpNode (XML_NS, LANG_URI, a.Value));
 				}
 
-				new_node.AddChild (new XmpNode (a.NamespaceURI, a.LocalName, a.InnerText));
+				new_node.AddChild (new XmpNode (a.Name.NamespaceName, a.Name.LocalName, a.Value));
 			}
 			parent.AddChild (new_node);
 		}
 
-		private XmpNode CreateTextPropertyWithQualifiers (XmlNode node, string value)
+		private XmpNode CreateTextPropertyWithQualifiers (XElement node, string value)
 		{
-			XmpNode t = new XmpNode (node.NamespaceURI, node.LocalName, value);
-			foreach (XmlAttribute attr in node.Attributes) {
+			XmpNode t = new XmpNode (node.Name.NamespaceName, node.Name.LocalName, value);
+			foreach (var attr in node.Attributes()) {
 				if (attr.In (XMLNS_NS))
 					continue;
 				if (attr.Is (RDF_NS, VALUE_URI) || attr.Is (RDF_NS, RESOURCE_URI))
 					continue; // These aren't qualifiers
-				t.AddQualifier (new XmpNode (attr.NamespaceURI, attr.LocalName, attr.InnerText));
+				t.AddQualifier(new XmpNode(attr.Name.NamespaceName, attr.Name.LocalName, attr.Value));
 			}
 			return t;
 		}
@@ -1004,15 +1019,22 @@ namespace TagLib.Xmp
 		/// </returns>
 		public string Render ()
 		{
-			XmlDocument doc = new XmlDocument (NameTable);
+			XDocument doc = new XDocument(); // NameTable
 			var meta = CreateNode (doc, "xmpmeta", ADOBE_X_NS);
 			var rdf = CreateNode (doc, "RDF", RDF_NS);
 			var description = CreateNode (doc, "Description", RDF_NS);
 			NodeTree.RenderInto (description);
-			doc.AppendChild (meta);
-			meta.AppendChild (rdf);
-			rdf.AppendChild (description);
-			return doc.OuterXml;
+			doc.Add (meta);
+			meta.Add(rdf);
+			rdf.Add(description);
+
+			StringBuilder builder = new StringBuilder();
+			using (var target = new StringWriter(builder))
+			{
+				doc.Save(target);
+			}
+
+			return builder.ToString();
 		}
 
 		/// <summary>
@@ -1025,20 +1047,35 @@ namespace TagLib.Xmp
 		{
 			if (!NamespacePrefixes.ContainsKey (ns)) {
 				NamespacePrefixes.Add (ns, String.Format ("ns{0}", ++anon_ns_count));
-				Console.WriteLine ("TAGLIB# DEBUG: Added {0} prefix for {1} namespace (XMP)", NamespacePrefixes [ns], ns);
+				Debug.WriteLine ("TAGLIB# DEBUG: Added {0} prefix for {1} namespace (XMP)", NamespacePrefixes [ns], ns);
 			}
 		}
 
-		internal static XmlNode CreateNode (XmlDocument doc, string name, string ns)
+		internal static XElement CreateNode (XDocument doc, string name, string ns)
 		{
-			EnsureNamespacePrefix (ns);
-			return doc.CreateElement (NamespacePrefixes [ns], name, ns);
+			var v = NameTable.Get(ns);
+			Debug.WriteLine(v);
+
+			EnsureNamespacePrefix(ns);
+
+			XNamespace xNs = ns;
+			var xName = xNs + NamespacePrefixes[ns];
+
+			Debug.WriteLine(xName);
+
+			return new XElement(XName.Get(name, NamespacePrefixes[ns]));
 		}
 
-		internal static XmlAttribute CreateAttribute (XmlDocument doc, string name, string ns)
+		internal static XAttribute CreateAttribute (XDocument doc, string name, string ns)
 		{
+			var v = NameTable.Get(ns);
+
 			EnsureNamespacePrefix (ns);
-			return doc.CreateAttribute (NamespacePrefixes [ns], name, ns);
+			
+			XNamespace xNs = ns;
+			var xName = xNs + NamespacePrefixes[ns];
+			
+			return new XAttribute(XName.Get(name, NamespacePrefixes[ns]), string.Empty);
 		}
 
 #endregion
