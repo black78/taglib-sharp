@@ -1053,17 +1053,13 @@ namespace TagLib.Xmp
 
 		internal static XElement CreateNode (XDocument doc, string name, string ns)
 		{
-			var v = NameTable.Get(ns);
-			Debug.WriteLine(v);
-
 			EnsureNamespacePrefix(ns);
 
 			XNamespace xNs = ns;
-			var xName = xNs + NamespacePrefixes[ns];
 
-			Debug.WriteLine(xName);
-
-			return new XElement(XName.Get(name, NamespacePrefixes[ns]));
+			return new XElement(
+				xNs + name, 
+				new[] { new XAttribute(XNamespace.Xmlns + NamespacePrefixes[ns], xNs) });
 		}
 
 		internal static XAttribute CreateAttribute (XDocument doc, string name, string ns)
