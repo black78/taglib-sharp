@@ -1,6 +1,7 @@
-using Gdk;
 using System;
 using NUnit.Framework;
+using System.IO;
+using System.Linq;
 
 namespace TagLib.Tests.Images.Validators
 {
@@ -9,7 +10,6 @@ namespace TagLib.Tests.Images.Validators
 		static ImageTest () {
 			// Initialize GDK
 			var args = Environment.GetCommandLineArgs ();
-			Global.InitCheck (ref args);
 		}
 
 		string pre_hash;
@@ -144,13 +144,42 @@ namespace TagLib.Tests.Images.Validators
 			if (!IsSupportedImageFile (file))
 				Assert.Fail("Unsupported type for data reading: "+file);
 
+			ByteVector v = null;
+
 			file.Mode = File.AccessMode.Read;
-			ByteVector v = file.ReadBlock ((int) file.Length);
-			byte [] result = null;
-			using (Pixbuf buf = new Pixbuf(v.Data))
-				result = buf.SaveToBuffer("png");
-			file.Mode = File.AccessMode.Closed;
-			return Utils.Md5Encode (result);
+			try
+			{
+				v = file.ReadBlock ((int) file.Length);
+			}
+			finally 
+			{
+				file.Mode = File.AccessMode.Closed;
+			}
+
+			System.Drawing.Image image = null;
+			try
+			{
+				using (MemoryStream stream = new MemoryStream(v.Data))
+				{
+					image = System.Drawing.Image.FromStream(stream);
+				}
+			
+				byte[] result = null;
+				using (MemoryStream target = new MemoryStream())
+				{
+					image.Save(target, System.Drawing.Imaging.ImageFormat.Tiff);
+					result = target.ToArray();
+				}
+
+				return Utils.Md5Encode (result);
+			}
+			finally 
+			{
+				if (image != null) 
+				{
+					image.Dispose();
+				}
+			}
 		}
 
 		void ValidateImageData ()
