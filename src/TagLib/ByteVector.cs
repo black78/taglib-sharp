@@ -1200,14 +1200,46 @@ namespace TagLib {
 		/// </returns>
 		public ushort ToUShort (bool mostSignificantByteFirst)
 		{
-			ushort sum = 0;
-			int last = Count > 2 ? 1 : Count - 1;
-			for (int i = 0; i <= last; i++) {
-				int offset = mostSignificantByteFirst ? last-i : i;
-				sum |= (ushort)(this[i] << (offset * 8));
+			byte[] buff = new byte[2];
+
+			int size = Count >= 2 ? 2 : Count;
+			Array.Copy(this.Data, buff, size);
+
+			if (mostSignificantByteFirst)
+			{
+				Array.Reverse(buff, 0, 2);
 			}
 			
-			return sum;
+			return BitConverter.ToUInt16(buff, 0);
+		}
+
+		/// <summary>
+		///    Converts an first two bytes of the current instance to a
+		///    <see cref="short" /> value.
+		/// </summary>
+		/// <param name="mostSignificantByteFirst">
+		///    <see langword="true" /> if the most significant byte
+		///    appears first (big endian format), or <see
+		///    langword="false" /> if the least significant byte appears
+		///    first (little endian format).
+		/// </param>
+		/// <returns>
+		///    A <see cref="ushort"/> value containing the value read
+		///    from the current instance.
+		/// </returns>
+		public short ToShort(bool mostSignificantByteFirst)
+		{
+			byte[] buff = new byte[2];
+
+			int size = Count > 2 ? 2 : Count - 1;
+			Array.Copy(this.Data, buff, size);
+
+			if (mostSignificantByteFirst)
+			{
+				Array.Reverse(buff, 0, 2);
+			}
+
+			return BitConverter.ToInt16(buff, 0);
 		}
 		
 		/// <summary>

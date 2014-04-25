@@ -125,5 +125,23 @@ namespace TagLib.Xmp
 				!((XAttribute)node).Is (XmpTag.RDF_NS, XmpTag.LI_URI) &&
 				!((XAttribute)node).IsOld ();
 		}
+
+		public static bool HasNamespace(this XElement element, XNamespace ns, string prefix) 
+		{
+			if (element.Name.Namespace == ns)
+			{
+				return true;
+			}
+			else if (element.Attribute(XNamespace.Xmlns + prefix) != null)
+			{
+				return true;
+			}
+			else if(element.Parent != null) 
+			{
+				return element.Parent.HasNamespace(ns, prefix);
+			}
+
+			return false;
+		}
 	}
 }

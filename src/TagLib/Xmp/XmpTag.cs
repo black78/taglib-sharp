@@ -1020,13 +1020,11 @@ namespace TagLib.Xmp
 		public string Render ()
 		{
 			XDocument doc = new XDocument(); // NameTable
-			var meta = CreateNode (doc, "xmpmeta", ADOBE_X_NS);
-			var rdf = CreateNode (doc, "RDF", RDF_NS);
-			var description = CreateNode (doc, "Description", RDF_NS);
+			
+			var meta = AddNode (doc, "xmpmeta", ADOBE_X_NS);
+			var rdf = AddNode (meta, "RDF", RDF_NS);
+			var description = AddNode(rdf, "Description", RDF_NS);
 			NodeTree.RenderInto (description);
-			doc.Add (meta);
-			meta.Add(rdf);
-			rdf.Add(description);
 
 			StringBuilder builder = new StringBuilder();
 			using (var target = new StringWriter(builder))
@@ -1051,27 +1049,58 @@ namespace TagLib.Xmp
 			}
 		}
 
-		internal static XElement CreateNode (XDocument doc, string name, string ns)
+		internal static XElement AddNode(XDocument doc, string name, string ns)
 		{
 			EnsureNamespacePrefix(ns);
 
 			XNamespace xNs = ns;
 
-			return new XElement(
-				xNs + name, 
+			var element = new XElement(
+				xNs + name,
 				new[] { new XAttribute(XNamespace.Xmlns + NamespacePrefixes[ns], xNs) });
+
+			doc.Add(element);
+
+			return element;
 		}
 
-		internal static XAttribute CreateAttribute (XDocument doc, string name, string ns)
+		internal static XElement AddNode(XElement parent, string name, string ns)
 		{
-			var v = NameTable.Get(ns);
+			EnsureNamespacePrefix(ns);
 
-			EnsureNamespacePrefix (ns);
-			
+			var nsPrefix = NamespacePrefixes[ns];
 			XNamespace xNs = ns;
-			var xName = xNs + NamespacePrefixes[ns];
+
+			object[] attrs = new object[0];
+
+			if (!parent.HasNamespace(xNs, nsPrefix))
+			{
+				attrs = new[] { new XAttribute(XNamespace.Xmlns + nsPrefix, xNs) };
+			}
+
+			var element = new XElement(xNs + name, attrs);
+			parent.Add(element);
 			
-			return new XAttribute(XName.Get(name, NamespacePrefixes[ns]), string.Empty);
+			return element;
+		}
+
+		internal static XAttribute AddAttribute (XElement parent, string name, string ns, string value)
+		{
+			EnsureNamespacePrefix (ns);
+
+			var nsPrefix = NamespacePrefixes[ns];
+			XNamespace xNs = ns;
+
+			if (!parent.HasNamespace(xNs, nsPrefix))
+			{
+				parent.Add(new XAttribute(XNamespace.Xmlns + nsPrefix, xNs));
+			}
+
+			var attribute = new XAttribute(xNs + name, value);
+
+			parent.Add(attribute);
+
+			return attribute;
 		}
 
 #endregion
