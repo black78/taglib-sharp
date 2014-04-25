@@ -1120,16 +1120,8 @@ namespace TagLib {
 		/// </returns>
 		public int ToInt (bool mostSignificantByteFirst)
 		{
-			int ret = 0;
-			int last = Count > 4 ? 3 : Count - 1;
-
-			for (int i = 0; i <= last; i++) {
-				int offset = mostSignificantByteFirst ? last-i : i;
-				ret |= (int) this[i] << (offset * 8);
+			return BitConverter.ToInt32(CloneDataForConvert(4, mostSignificantByteFirst), 0);
 			}
-
-			return ret;
-		}
 
 		/// <summary>
 		///    Converts an first four bytes of the current instance to
@@ -1142,6 +1134,38 @@ namespace TagLib {
 		public int ToInt ()
 		{
 			return ToInt (true);
+		}
+
+		/// <summary>
+		///    Converts an first eight bytes of the current instance to
+		///    a <see cref="long" /> value.
+		/// </summary>
+		/// <param name="mostSignificantByteFirst">
+		///    <see langword="true" /> if the most significant byte
+		///    appears first (big endian format), or <see
+		///    langword="false" /> if the least significant byte appears
+		///    first (little endian format).
+		/// </param>
+		/// <returns>
+		///    A <see cref="long"/> value containing the value read
+		///    from the current instance.
+		/// </returns>
+		public long ToLong(bool mostSignificantByteFirst)
+		{
+			return BitConverter.ToInt64(CloneDataForConvert(8, mostSignificantByteFirst), 0);
+		}
+
+		/// <summary>
+		///    Converts an first eight bytes of the current instance to
+		///    a <see cref="long" /> value using big-endian format.
+		/// </summary>
+		/// <returns>
+		///    A <see cref="long"/> value containing the value read
+		///    from the current instance.
+		/// </returns>
+		public long ToLong()
+		{
+			return ToLong(true);
 		}
 
 		/// <summary>
@@ -1160,17 +1184,9 @@ namespace TagLib {
 		/// </returns>
 		public uint ToUInt (bool mostSignificantByteFirst)
 		{
-			uint sum = 0;
-			int last = Count > 4 ? 3 : Count - 1;
-			
-			for (int i = 0; i <= last; i++) {
-				int offset = mostSignificantByteFirst ? last-i : i;
-				sum |= (uint) this[i] << (offset * 8);
+			return BitConverter.ToUInt32(CloneDataForConvert(4, mostSignificantByteFirst), 0);
 			}
 			
-			return sum;
-		}
-		
 		/// <summary>
 		///    Converts an first four bytes of the current instance to
 		///    a <see cref="uint" /> value using big-endian format.
@@ -1200,17 +1216,20 @@ namespace TagLib {
 		/// </returns>
 		public ushort ToUShort (bool mostSignificantByteFirst)
 		{
-			byte[] buff = new byte[2];
-
-			int size = Count >= 2 ? 2 : Count;
-			Array.Copy(this.Data, buff, size);
-
-			if (mostSignificantByteFirst)
-			{
-				Array.Reverse(buff, 0, 2);
+			return BitConverter.ToUInt16(CloneDataForConvert(2, mostSignificantByteFirst), 0);
 			}
 			
-			return BitConverter.ToUInt16(buff, 0);
+		/// <summary>
+		///    Converts an first two bytes of the current instance to
+		///    a <see cref="ushort" /> value using big-endian format.
+		/// </summary>
+		/// <returns>
+		///    A <see cref="ushort"/> value containing the value read
+		///    from the current instance.
+		/// </returns>
+		public ushort ToUShort ()
+		{
+			return ToUShort (true);
 		}
 
 		/// <summary>
@@ -1229,19 +1248,10 @@ namespace TagLib {
 		/// </returns>
 		public short ToShort(bool mostSignificantByteFirst)
 		{
-			byte[] buff = new byte[2];
-
-			int size = Count > 2 ? 2 : Count - 1;
-			Array.Copy(this.Data, buff, size);
-
-			if (mostSignificantByteFirst)
-			{
-				Array.Reverse(buff, 0, 2);
-			}
-
-			return BitConverter.ToInt16(buff, 0);
+			return BitConverter.ToInt16(CloneDataForConvert(2, mostSignificantByteFirst), 0);
 		}
 		
+
 		/// <summary>
 		///    Converts an first two bytes of the current instance to
 		///    a <see cref="ushort" /> value using big-endian format.
@@ -1250,10 +1260,11 @@ namespace TagLib {
 		///    A <see cref="ushort"/> value containing the value read
 		///    from the current instance.
 		/// </returns>
-		public ushort ToUShort ()
+		public short ToShort()
 		{
-			return ToUShort (true);
+			return ToShort(true);
 		}
+		
 		
 		/// <summary>
 		///    Converts an first eight bytes of the current instance to
@@ -1271,13 +1282,7 @@ namespace TagLib {
 		/// </returns>
 		public ulong ToULong (bool mostSignificantByteFirst)
 		{
-			ulong sum = 0;
-			int last = Count > 8 ? 7 : Count - 1;
-			for(int i = 0; i <= last; i++) {
-				int offset = mostSignificantByteFirst ? last-i : i;
-				sum |= (ulong) this[i] << (offset * 8);
-			}
-			return sum;
+			return BitConverter.ToUInt64(CloneDataForConvert(8, mostSignificantByteFirst), 0);
 		}
 		
 		/// <summary>
@@ -1814,6 +1819,59 @@ namespace TagLib {
 #region Static Conversions
 		
 		/// <summary>
+		///    Converts an value into a data representation.
+		/// </summary>
+		/// <param name="value">
+		///    A <see cref="short"/> value to convert into bytes.
+		/// </param>
+		/// <param name="mostSignificantByteFirst">
+		///    <see langword="true" /> if the most significant byte is
+		///    to appear first (big endian format), or <see
+		///    langword="false" /> if the least significant byte is to
+		///    appear first (little endian format).
+		/// </param>
+		/// <returns>
+		///    A <see cref="ByteVector"/> object containing the encoded
+		///    representation of <paramref name="value" />.
+		/// </returns>
+		public static ByteVector FromShort(short value,
+											 bool mostSignificantByteFirst)
+		{
+			var buf = BitConverter.GetBytes(value);
+
+			if (mostSignificantByteFirst) 
+			{
+				Array.Reverse(buf);
+			}
+
+			ByteVector vector = new ByteVector();
+			vector.Add(buf);
+
+			return vector;
+		}
+
+		/// <summary>
+		///    Converts an value into a data representation.
+		/// </summary>
+		/// <param name="value">
+		///    A <see cref="short"/> value to convert into bytes.
+		/// </param>
+		/// <param name="mostSignificantByteFirst">
+		///    <see langword="true" /> if the most significant byte is
+		///    to appear first (big endian format), or <see
+		///    langword="false" /> if the least significant byte is to
+		///    appear first (little endian format).
+		/// </param>
+		/// <returns>
+		///    A <see cref="ByteVector"/> object containing the encoded
+		///    representation of <paramref name="value" />.
+		/// </returns>
+		public static ByteVector FromShort(short value)
+		{
+			return FromShort(value, true);
+		}
+
+		/// <summary>
 		///    Converts a value into a data representation.
 		/// </summary>
 		/// <param name="value">
@@ -2084,7 +2142,7 @@ namespace TagLib {
 		{
 			return FromString (text, StringType.UTF8);
 		}
-
+		
 		/// <summary>
 		///    Creates a new instance of <see cref="ByteVector" /> by
 		///    reading in the contents of a specified file abstraction.
@@ -2234,6 +2292,20 @@ namespace TagLib {
 			}
 			
 			return vector;
+		}
+		
+		private byte[] CloneDataForConvert(int sizeConvertTo, bool mostSignificantByteFirst) 
+		{
+			byte[] buf = new byte[sizeConvertTo];
+			int count = Count >= sizeConvertTo ? sizeConvertTo : Count;
+			Array.Copy(Data, 0, buf, sizeConvertTo - count, count);
+
+			if (mostSignificantByteFirst)
+			{
+				Array.Reverse(buf);
+			}
+
+			return buf;
 		}
 		
 #endregion

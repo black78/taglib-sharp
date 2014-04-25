@@ -540,7 +540,7 @@ namespace TagLib.IFD
 		/// </returns>
 		private short ReadShort ()
 		{
-			return file.ReadBlock(2).ToShort(is_bigendian);
+			return file.ReadBlock (2).ToShort (is_bigendian);
 		}
 
 		/// <summary>
